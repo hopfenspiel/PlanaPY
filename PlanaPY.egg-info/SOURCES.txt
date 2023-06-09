@@ -1,5 +1,7 @@
 README.md
 setup.py
+PlanaPY/PlanaPY.py
+PlanaPY/__init__.py
 PlanaPY.egg-info/PKG-INFO
 PlanaPY.egg-info/SOURCES.txt
 PlanaPY.egg-info/dependency_links.txt

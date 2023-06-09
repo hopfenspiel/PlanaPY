@@ -273,7 +273,7 @@ class AnaplanModels:
         
         return self.get_request(URL)
     
-    def sync_models(self, source_model, target_model):
+    def sync_models(self, source_model, target_model, workspace):
         s_model_id = self.models[(self.models.name == source_model) 
                                             & (self.models.currentWorkspaceName == workspace)]['id'].iloc[0]
         t_model_id = self.models[(self.models.name == source_model) 

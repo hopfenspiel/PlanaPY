@@ -1,0 +1,7 @@
+README.md
+setup.py
+PlanaPY.egg-info/PKG-INFO
+PlanaPY.egg-info/SOURCES.txt
+PlanaPY.egg-info/dependency_links.txt
+PlanaPY.egg-info/requires.txt
+PlanaPY.egg-info/top_level.txt

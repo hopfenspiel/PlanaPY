@@ -80,7 +80,7 @@ class AnaplanAPI:
             
         return self.resp.status_code  
 		
-class AnaplanModels():
+class AnaplanModels:
     def __init__(self, api):
         self.api = api
         self.info = self.model_info()

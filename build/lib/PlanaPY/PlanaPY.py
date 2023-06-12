@@ -4,6 +4,7 @@ import json
 import pandas as pd
 from time import gmtime, strftime
 import time
+import io 
 
 class AnaplanAPI: 
     def __init__(self):
@@ -239,6 +240,59 @@ class AnaplanModels:
         
         return self.resp 
     
+    def get_export_actions(self, model, workspace):
+        exports_dict = {}
+        
+        model_id = self.models[(self.models.name == model) & (self.models.currentWorkspaceName == workspace)]['id'].iloc[0]
+        URL = self.api.api_url + "models/{0}/exports".format(model_id)
+        
+        actions = self.get_request(URL)['exports']
+        
+        for a in actions:
+            exports_dict[a['name']] = a
+        
+        return exports_dict
+        
+    def run_export_action(self, model, workspace, export):
+        self.api.headers['Content-Type'] = 'application/json'
+        model_id = self.models[(self.models.name == model) & (self.models.currentWorkspaceName == workspace)]['id'].iloc[0]
+        action_id = self.get_export_actions(model=model, workspace=workspace)[export]['id']
+        
+        URL = self.api.api_url + "models/{0}/exports/{1}/tasks".format(model_id, action_id)
+        body = {'localeName': 'en_US'}
+        
+        self.resp = requests.post(URL, headers=self.api.headers, json=body)
+        self.api.headers.pop('Content-Type')
+        
+        if self.resp.status_code == 204:
+            print("Export action {0} successfully ran in model {1}".format(file, model))
+        
+        return self.resp 
+    
+    def export_data(self, model, workspace, export):
+        model_id = self.models[(self.models.name == model) & (self.models.currentWorkspaceName == workspace)]['id'].iloc[0]
+        file_id = self.get_model_files(model=model, workspace = workspace)[export]['id']
+        
+        URL = self.api.api_url + "models/{0}/files/{1}/chunks".format(model_id, file_id)
+        
+        chunks = self.get_request(URL)['chunks']
+        
+        chunk_list = []
+        
+        for c in chunks:
+            chunk_id = c['id']
+            chunk_URL = self.api.api_url + "models/{0}/files/{1}/chunks/{2}".format(model_id, file_id, chunk_id)
+            chunk = requests.get(chunk_URL, headers = self.api.headers).content
+            df = pd.read_csv(io.StringIO(chunk.decode('utf-8')), header=None)
+            chunk_list.append(df)
+
+        all_chunks = pd.concat(chunk_list).reset_index()
+        all_chunks.columns = all_chunks.iloc[0]
+        all_chunks.drop(all_chunks.index[0], inplace=True)
+        all_chunks = all_chunks.iloc[:,1:]
+        
+        return all_chunks       
+        
     def change_model_status(self, model, workspace, status):
         model_id = self.models[(self.models.name == model) & (self.models.currentWorkspaceName == workspace)]['id'].iloc[0]
         URL = self.api.api_url + "models/{0}/onlineStatus".format(model_id)

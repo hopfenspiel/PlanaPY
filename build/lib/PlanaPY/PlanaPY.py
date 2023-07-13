@@ -330,11 +330,11 @@ class AnaplanModels:
     def compatible_revisions(self, source_model, target_model, workspace):
         s_model_id = self.models[(self.models.name == source_model) 
                                             & (self.models.currentWorkspaceName == workspace)]['id'].iloc[0]
-        t_model_id = self.models[(self.models.name == source_model) 
+        t_model_id = self.models[(self.models.name == target_model) 
                                  & (self.models.currentWorkspaceName == workspace)]['id'].iloc[0]
 
         URL = self.api.api_url + "models/{0}/alm/syncableRevisions?sourceModelId={1}".format(t_model_id, s_model_id)
-        
+
         return self.get_request(URL)
     
     def latest_revision(self, model, workspace):
@@ -352,7 +352,7 @@ class AnaplanModels:
     def sync_models(self, source_model, target_model, workspace):
         s_model_id = self.models[(self.models.name == source_model) 
                                             & (self.models.currentWorkspaceName == workspace)]['id'].iloc[0]
-        t_model_id = self.models[(self.models.name == source_model) 
+        t_model_id = self.models[(self.models.name == target_model) 
                                  & (self.models.currentWorkspaceName == workspace)]['id'].iloc[0]
 
         URL = self.api.api_url + "models/{0}/alm/syncTasks".format(t_model_id)
@@ -361,9 +361,10 @@ class AnaplanModels:
             body = {
                 "sourceRevisionId": self.compatible_revisions( ## most recent compatible revision
                                         source_model = source_model, 
-                                        target_model = target_model)['revisions'][0]['id'],
+                                        target_model = target_model,
+                                        workspace = workspace)['revisions'][0]['id'],
                 "sourceModelId": s_model_id,
-                "targetRevisionId": self.latest_revision(target_model)['revisions'][0]['id'] ## most recent revivsion push
+                "targetRevisionId": self.latest_revision(target_model, workspace)['revisions'][0]['id'] ## most recent revivsion push
             }
             self.api.headers['Content-Type'] = 'application/json'
             self.resp = requests.post(URL, headers=self.api.headers, json=body)
@@ -373,7 +374,8 @@ class AnaplanModels:
             print("Unable to sync source model {0} with target model {1}".format(source_model, target_model))
             return self.resp.status_code
 
-        print(self.resp.status_code)    
+        if self.resp.status_code in (200, 201):
+            print("Model {0} successfully synced to model {1}".format(source_model, target_model))
         
         return self.resp
     
